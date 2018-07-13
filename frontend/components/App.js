@@ -15,7 +15,7 @@ class App extends React.Component {
     componentDidMount() {
     // WebSockets Receiving Event Handlers
         this.state.socket.on('connect', () => {
-            const username = window.prompt('Enter a username: ')
+            const username = window.prompt('Enter a username: ');
             this.setState({
                 username: username,
             });

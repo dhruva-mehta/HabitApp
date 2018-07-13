@@ -9,6 +9,8 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var _ = require('underscore');
 
+var analysis = require('./analysis')
+
 /* EXPRESS ROUTES */
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -19,6 +21,8 @@ app.get('/', (request, response) => {
 
 app.use('/auth', auth);
 app.use('/api', routes);
+
+const messageArray = {documents: [{ 'id': '1', 'language': 'en', 'text': 'I really enjoy the new XBox One S. It has a clean look, it has 4K/HDR resolution and it is affordable.' }]}
 
 /* SOCKETS */
 io.on('connection', socket => {
@@ -59,6 +63,16 @@ io.on('connection', socket => {
     socket.on('stopTyping', (username)=> {
         socket.to('chat').emit('stopTyping', username);
     });
+
+    socket.on('messageArray', messages => {
+        // var last5 = messages.slice(-5);
+        // var joined = last5.join(' ');
+        var joined = messages.join(' ')
+        console.log(joined);
+        var document = {documents: [{'id': '1', 'text': joined}]};
+        analysis.get_sentiments(document);
+        analysis.get_key_phrases(document);
+    })
 });
 
 

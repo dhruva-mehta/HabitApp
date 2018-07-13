@@ -60,18 +60,36 @@ class Chat extends React.Component {
       })
     }
 
-    handleSubmit(e){
-      e.preventDefault();
+    emit(){
       let tempMessageArr = this.state.messages.slice();
-      tempMessageArr.push(`${this.props.username}: ${this.state.message}`);
+      tempMessageArr.push(this.state.message);
       this.setState({
         messages: tempMessageArr,
+      }, () => {
+        this.props.socket.emit('messageArray', this.state.messages)
+        console.log(this.state.messages)
       })
       this.props.socket.emit('stopTyping', this.props.username);
       this.props.socket.emit('message', this.state.message);
+      // if (this.state.messages.length % 5 === 0 && this.state.messages.length > 0) {
+      //   this.props.socket.emit('messageArray', this.state.messages);
+      // }
       this.setState({
         message: "",
       })
+    }
+
+    handleSubmit(e){
+      e.preventDefault();
+      var punct = ['.', ',', '!', '?']
+      if (punct.indexOf(this.state.message[this.state.message.length - 1]) === -1) {
+        console.log('punct check')
+        this.setState({
+          message: this.state.message + '.'
+        }, () => this.emit())
+      } else {
+        this.emit()
+      }
     }
 
     render(){
