@@ -14,6 +14,7 @@ There are many features including: <ul>
     <li>Auto Punctuation and Auto Slang Translation</li>
     <li>Beautiful and responsive interface for the user experience</li>
 </ul>
+
 ## Team Members
 Josie!
 Richard!
