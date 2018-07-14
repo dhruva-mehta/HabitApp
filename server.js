@@ -1,13 +1,14 @@
 const path = require('path');
 const express = require('express');
 
-const app = express();
+var app = require('./passport.js');
 const routes = require('./backend/routes');
-const auth = require('./backend/auth');
 
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var _ = require('underscore');
+
+var analysis = require('./analysis')
 
 /* EXPRESS ROUTES */
 
@@ -17,7 +18,6 @@ app.get('/', (request, response) => {
     response.sendFile(__dirname + '/public/index.html'); // For React/Redux
 });
 
-app.use('/auth', auth);
 app.use('/api', routes);
 
 /* SOCKETS */
@@ -52,14 +52,33 @@ io.on('connection', socket => {
         return "";
     });
 
-    socket.on('typing', (username)=> {
+    socket.on('typing', (username) => {
         socket.to('chat').emit('typing', username);
     });
 
-    socket.on('stopTyping', (username)=> {
+    socket.on('stopTyping', (username) => {
         socket.to('chat').emit('stopTyping', username);
     });
+
+    socket.on('messageArray', messages => {
+        var last5 = messages.slice(-5);
+        var joined = _.map(last5, (msg)=>msg.body).join(' ');
+        console.log(joined)
+        var doc = {documents: [{'id': '1', 'text': joined}]};
+        analysis.get_sentiments(doc, (score) => {
+          console.log('callback')
+          if (score < 0.5) {
+            console.log(score)
+            io.to('chat').emit('message', {
+              username: `Moodbot`,
+              content: `Your recent messages have seemed negative. Why not tell a joke?`
+            })
+          }
+        })
+        analysis.get_key_phrases(doc);
+    })
 });
+
 
 
 /* CONNECTION */
