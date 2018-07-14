@@ -24,6 +24,7 @@ var uri = 'westcentralus.api.cognitive.microsoft.com';
 var sentPath = '/text/analytics/v2.0/sentiment';
 var phrasePath = '/text/analytics/v2.0/keyPhrases';
 
+
 var sentiment_response_handler = function sentiment_response_handler(response, callback) {
   var body = '';
   response.on('data', function (d) {
@@ -54,7 +55,9 @@ var phrase_response_handler = function phrase_response_handler(response) {
     });
 };
 
+
 var get_sentiments = function get_sentiments(documents, callback) {
+
     var body = JSON.stringify(documents);
 
     var request_params = {

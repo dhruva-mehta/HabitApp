@@ -131,6 +131,9 @@ class Chat extends React.Component {
       })
       this.props.socket.emit('stopTyping', this.props.username);
       this.props.socket.emit('message', this.state.message);
+      // if (this.state.messages.length % 5 === 0 && this.state.messages.length > 0) {
+      //   this.props.socket.emit('messageArray', this.state.messages);
+      // }
       this.setState({
         message: "",
       })
@@ -160,7 +163,6 @@ class Chat extends React.Component {
         suggestions: []
       });
     };
-
     render(){
       const { message,suggestions } = this.state;
       const inputProps= {

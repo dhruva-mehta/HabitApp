@@ -20,6 +20,8 @@ app.get('/', (request, response) => {
 
 app.use('/api', routes);
 
+const messageArray = {documents: [{ 'id': '1', 'language': 'en', 'text': 'I really enjoy the new XBox One S. It has a clean look, it has 4K/HDR resolution and it is affordable.' }]}
+
 /* SOCKETS */
 io.on('connection', socket => {
     console.log('connected');
