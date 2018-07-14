@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button, Form, Comment, Image} from 'semantic-ui-react';
 import {BrowserRouter as Route, Link, Switch} from 'react-router-dom';
-import IndivProfile from './indivProf';
 import Chat from './chat';
 
 class Profile extends React.Component {
