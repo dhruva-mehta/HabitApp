@@ -24,19 +24,20 @@ var uri = 'westcentralus.api.cognitive.microsoft.com';
 var sentPath = '/text/analytics/v2.0/sentiment';
 var phrasePath = '/text/analytics/v2.0/keyPhrases';
 
-var sentiment_response_handler = function sentiment_response_handler(response) {
-    var body = '';
-    response.on('data', function (d) {
-        body += d;
-    });
-    response.on('end', function () {
-        var body_ = JSON.parse(body);
-        // let body__ = JSON.stringify (body_, null, '  ');
-        console.log(body_.documents[0].score);
-    });
-    response.on('error', function (e) {
-        console.log('Error: ' + e.message);
-    });
+
+var sentiment_response_handler = function sentiment_response_handler(response, callback) {
+  var body = '';
+  response.on('data', function (d) {
+      body += d;
+  });
+  response.on('end', function () {
+      var body_ = JSON.parse(body);
+      // let body__ = JSON.stringify (body_, null, '  ');
+      callback(body_.documents[0].score)
+  });
+  response.on('error', function (e) {
+      console.log('Error: ' + e.message);
+  });
 };
 
 var phrase_response_handler = function phrase_response_handler(response) {
@@ -54,7 +55,9 @@ var phrase_response_handler = function phrase_response_handler(response) {
     });
 };
 
-var get_sentiments = function get_sentiments(documents) {
+
+var get_sentiments = function get_sentiments(documents, callback) {
+
     var body = JSON.stringify(documents);
 
     var request_params = {
@@ -66,7 +69,7 @@ var get_sentiments = function get_sentiments(documents) {
         }
     };
 
-    var req = https.request(request_params, sentiment_response_handler);
+    var req = https.request(request_params, (response) => sentiment_response_handler(response, callback));
     req.write(body);
     req.end();
 };
