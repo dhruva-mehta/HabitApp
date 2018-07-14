@@ -2,47 +2,7 @@ import React from 'react';
 import { Button, Form, Comment} from 'semantic-ui-react';
 import Autosuggest from 'react-autosuggest'
 
-const languages = [ //should be changed to whatever array we want!
-  {
-    name: 'C',
-    year: 1972
-  },
-  {
-    name: 'C#',
-    year: 2000
-  },
-  {
-    name: 'C++',
-    year: 1983
-  },
-];
-
-function escapeRegexCharacters(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-
-function getSuggestions(value) {
-  console.log('ello pual')
-  const escapedValue = escapeRegexCharacters(value.trim());
-
-  if (escapedValue === '') {
-    return [];
-  }
-  const regex = new RegExp('^' + escapedValue, 'i');
-  return languages.filter(language => regex.test(language.name));
-}
-
-function getSuggestionValue(suggestion) {
-  return suggestion.name;
-}
-
-function renderSuggestion(suggestion) {
-  return (
-    <span>{suggestion.name}</span>
-  );
-}
-
+let suggestions = [];
 
 class Chat extends React.Component {
     constructor(props) {
@@ -54,7 +14,66 @@ class Chat extends React.Component {
             suggestions: [],
             // username: this.props.location.state.username,
         };
+        // this.onGifClick = this.onGifClick.bind(this)
+    }
 
+    escapeRegexCharacters(str) {
+      return str.replace(/[*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    getSuggestions(value) {
+      const escapedValue = this.escapeRegexCharacters(value.trim());
+
+      if (escapedValue === '') {
+        return [];
+      }
+      const regex = new RegExp('^' + escapedValue, 'i');
+
+      return suggestions
+      .map(section => {
+        return {
+          title: section.title,
+          suggestions: section.suggestions.filter(suggestion => regex.test(suggestion.name))
+        };
+      })
+      .filter(section => section.suggestions.length>0);
+    }
+
+    getSuggestionValue(suggestion) {
+      return suggestion.name;
+    }
+
+    renderSuggestion(suggestion) {
+      return (
+        <img style={{height: 50, width: 50}} src={suggestion.source} />
+      );
+    }
+
+    onSuggestionSelected(event, {suggestion}) {
+      this.props.socket.emit('gif', suggestion.source)
+      gifs = []
+    }
+
+    onSuggestionsFetchRequested({ value }){
+      this.setState({
+        suggestions: this.getSuggestions(value)
+      });
+    };
+
+    onSuggestionsClearRequested(){
+      this.setState({
+        suggestions: []
+      });
+    };
+
+    renderSectionTitle(section){
+      return (
+        <strong>{section.title}</strong>
+      );
+    }
+
+    getSectionSuggestions(section) {
+      return section.suggestions;
     }
 
     componentDidMount() {
@@ -82,6 +101,18 @@ class Chat extends React.Component {
             });
         });
 
+        this.props.socket.on('gifCall', (data) => {
+          let gifs = []
+          data.forEach(gif => {
+            gifs.push({
+                "source": 'https://media.giphy.com/media/' + gif.id + '/200w_d.gif',
+                "name": gif.search
+            })
+          })
+          suggestions.push({'title': 'Gifs', 'suggestions': gifs})
+          this.setState({message: data[0].search})
+        })
+
         this.props.socket.on('stopTyping', (username) => {
             let tempArr = this.state.typing.slice();
             for(var ind in tempArr) {
@@ -96,7 +127,7 @@ class Chat extends React.Component {
 
         this.props.socket.on('message', message => {
             let tempMessageArr = this.state.messages.slice();
-            tempMessageArr.push({name: message.username, time: new Date(), body: message.content});
+            tempMessageArr.push({name: message.username, time: new Date(), body: message.content, image: message.image});
             this.setState({
                 messages: tempMessageArr,
             })
@@ -121,7 +152,7 @@ class Chat extends React.Component {
       this.setState({
         messages: tempMessageArr,
       }, () => {
-        var comp = ['System', 'Moodbot']
+        var comp = ['System', 'Moodbot', 'Giphy']
         var filtered = this.state.messages.filter(mess => {
           return comp.indexOf(mess.name) === -1;
         })
@@ -152,17 +183,6 @@ class Chat extends React.Component {
       }
     }
 
-    onSuggestionsFetchRequested({ value }){
-      this.setState({
-        suggestions: getSuggestions(value)
-      });
-    };
-
-    onSuggestionsClearRequested(){
-      this.setState({
-        suggestions: []
-      });
-    };
     render(){
       const { message,suggestions } = this.state;
       const inputProps= {
@@ -180,6 +200,7 @@ class Chat extends React.Component {
                     <Comment.Content>
                       <Comment.Author>{message.name}</Comment.Author>
                       <Comment.Text>{message.body}</Comment.Text>
+                      {message.image ? <img style={{width:100, height: 100}}src={message.image} /> : null}
                     </Comment.Content>
                   </Comment>
                 </Comment.Group>
@@ -198,8 +219,12 @@ class Chat extends React.Component {
           suggestions={suggestions}
           onSuggestionsFetchRequested={this.onSuggestionsFetchRequested.bind(this)}
           onSuggestionsClearRequested={this.onSuggestionsClearRequested.bind(this)}
-          getSuggestionValue={getSuggestionValue}
-          renderSuggestion={renderSuggestion}
+          getSuggestionValue={this.getSuggestionValue}
+          renderSuggestion={this.renderSuggestion}
+          onSuggestionSelected={this.onSuggestionSelected.bind(this)}
+          renderSectionTitle={this.renderSectionTitle.bind(this)}
+          getSectionSuggestions={this.getSectionSuggestions.bind(this)}
+          multiSection={true}
           inputProps={inputProps} />
               <Form.Button type="submit" width={4}>Send</Form.Button>
             </Form.Group>

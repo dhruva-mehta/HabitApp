@@ -8,7 +8,9 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var _ = require('underscore');
 
-var analysis = require('./analysis')
+var analysis = require('./analysis');
+var API_KEY = process.env.API_KEY;
+var axios = require('axios');
 
 /* EXPRESS ROUTES */
 
@@ -19,8 +21,6 @@ app.get('/', (request, response) => {
 });
 
 app.use('/api', routes);
-
-const messageArray = {documents: [{ 'id': '1', 'language': 'en', 'text': 'I really enjoy the new XBox One S. It has a clean look, it has 4K/HDR resolution and it is affordable.' }]}
 
 /* SOCKETS */
 io.on('connection', socket => {
@@ -49,10 +49,18 @@ io.on('connection', socket => {
     socket.on('message', message => {
         socket.to('chat').emit('message', {
             username: socket.username,
-            content: message
+            content: message,
+            image: null
         });
         return "";
     });
+
+    socket.on('gif', source => {
+      io.to('chat').emit('message', {
+        username: 'Giphy',
+        image: source
+      })
+    })
 
     socket.on('typing', (username) => {
         socket.to('chat').emit('typing', username);
@@ -63,21 +71,30 @@ io.on('connection', socket => {
     });
 
     socket.on('messageArray', messages => {
+        var giphyCall = (keyword) => {
+          console.log('giphyCall')
+          const query = keyword.replace(' ', '+');
+          const queryUrl = `http://api.giphy.com/v1/gifs/search?q=${query}&api_key=${API_KEY}`;
+          axios.get(queryUrl).then(response => {
+            let data = []
+            for (let i = 0; i < 3; i++) {
+              data.push({id: response.data.data[i].id, search: keyword})
+            }
+            io.to('chat').emit('gifCall', data);
+          });
+        }
         var last5 = messages.slice(-5);
         var joined = _.map(last5, (msg)=>msg.body).join(' ');
-        console.log(joined)
         var doc = {documents: [{'id': '1', 'text': joined}]};
         analysis.get_sentiments(doc, (score) => {
-          console.log('callback')
           if (score < 0.5) {
-            console.log(score)
             io.to('chat').emit('message', {
               username: `Moodbot`,
-              content: `Your recent messages have seemed negative. Why not tell a joke?`
+              content: `Your recent messages have seemed negative. Why not send a gif?`
             })
           }
         })
-        analysis.get_key_phrases(doc);
+        analysis.get_key_phrases(doc, giphyCall);
     })
 });
 

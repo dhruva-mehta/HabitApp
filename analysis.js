@@ -40,7 +40,7 @@ var sentiment_response_handler = function sentiment_response_handler(response, c
   });
 };
 
-var phrase_response_handler = function phrase_response_handler(response) {
+var phrase_response_handler = function phrase_response_handler(response, callback) {
     var body = '';
     response.on('data', function (d) {
         body += d;
@@ -48,7 +48,7 @@ var phrase_response_handler = function phrase_response_handler(response) {
     response.on('end', function () {
         var body_ = JSON.parse(body);
         // let body__ = JSON.stringify (body_, null, '  ');
-        console.log(body_.documents[0].keyPhrases);
+        callback(body_.documents[0].keyPhrases[0]);
     });
     response.on('error', function (e) {
         console.log('Error: ' + e.message);
@@ -74,7 +74,7 @@ var get_sentiments = function get_sentiments(documents, callback) {
     req.end();
 };
 
-var get_key_phrases = function get_key_phrases(documents) {
+var get_key_phrases = function get_key_phrases(documents, callback) {
     var body = JSON.stringify(documents);
 
     var request_params = {
@@ -86,7 +86,7 @@ var get_key_phrases = function get_key_phrases(documents) {
         }
     };
 
-    var req = https.request(request_params, phrase_response_handler);
+    var req = https.request(request_params, (response) => phrase_response_handler(response, callback));
     req.write(body);
     req.end();
 };
