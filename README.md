@@ -1,65 +1,21 @@
-# React & Express Start App
+# Mood Chat
 
-Perfect for **Hackathons** 🎉 _ready for [Heroku](https://www.heroku.com/) deployment_
+Bridging the gap between generations today!
 
 ## Overview
 
-This is a simple starter to get you up and running for React projects. This is intended to provide:
+This is a messaging app aimed to make conversations easier between children and young adults with their elderly relatives.
+There are many features including:
+    A MoodBot that uses sentiment analysis on a conversation to deliver feedback to the participants using the Microsoft Azure Text Analytics API as well as suggest gifs based on keywords in the conversation
+    Gif integration using the Giphy API and the React Auto Suggest npm module
+    Random Joke integration from a one liner joke database
+    Fully integrated backend and frontend using mongoDB and passport authentication and websockets (Wow!)
+    Social network with said authentication
+    Auto Punctuation and Auto Slang Translation
+    Beautiful and responsive interface for the user experience
 
-* a lightweight webpack config (for development and production)
-* some helpful tooling for development workflow
-* a similar setup to what you'll see in the wild
-* Heroku-ready deployment setup
-
-## Running
-
-Install dependencies:
-
-```
-npm install
-```
-
-Start server:
-
-```
-npm run dev
-```
-
-Once the server is running, you can visit `http://localhost:3000/`
-
-## File layout
-
-- **Frontend React**
-    - Entry point is `frontend/index.js`
-    - The top level `<App />` component is in is in `frontend/component/App.js`
-    - CSS styles are in `frontend/stylesheets/style.css`
-- **Backend Express**
-    - Entry point is `server.js`
-    - API routes are under `backend/routes.js`
-    - API routes are served under `http://localhost:3000/api`
-
-## Production Build
-
-To build your production assets and run the server:
-
-```
-$ npm start
-```
-
-## Deploying to Heroku
-
-This app is set up for deployment to Heroku!
-
-_This assumes you have already have a Heroku account and have the
-[Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed_
-
-```
-$ heroku login
-$ heroku create -a name-of-your-app
-$ git push heroku master
-$ heroku open
-```
-
-Heroku will follow the `build` command in your `package.json` and compile assets with `webpack.prod.config.js`. It runs the Express web server in `server.js`.
-
-If you're unfamiliar with Heroku deployment (or just need a refresher), they have a really great walkthrough [here](https://devcenter.heroku.com/articles/getting-started-with-nodejs#introduction).
+## Team Members
+Josie!
+Richard!
+Dhruva!
+and MoodBot!
