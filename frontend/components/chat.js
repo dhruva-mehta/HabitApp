@@ -8,84 +8,85 @@ class Chat extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            socket: io(),
             message: '',
             messages: [],
             typing: [],
             suggestions: [],
-            // username: this.props.location.state.username,
+            username: this.props.location.state.user.name,
+            user: this.props.location.state.user,
         };
-        // this.onGifClick = this.onGifClick.bind(this)
     }
 
     escapeRegexCharacters(str) {
-      return str.replace(/[*+?^${}()|[\]\\]/g, '\\$&');
+    return str.replace(/[*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  getSuggestions(value) {
+    const escapedValue = this.escapeRegexCharacters(value.trim());
+
+    if (escapedValue === '') {
+      return [];
     }
+    const regex = new RegExp('^' + escapedValue, 'i');
 
-    getSuggestions(value) {
-      const escapedValue = this.escapeRegexCharacters(value.trim());
+    return suggestions
+    .map(section => {
+      return {
+        title: section.title,
+        suggestions: section.suggestions.filter(suggestion => regex.test(suggestion.name))
+      };
+    })
+    .filter(section => section.suggestions.length>0);
+  }
 
-      if (escapedValue === '') {
-        return [];
-      }
-      const regex = new RegExp('^' + escapedValue, 'i');
+  getSuggestionValue(suggestion) {
+    return suggestion.name;
+  }
 
-      return suggestions
-      .map(section => {
-        return {
-          title: section.title,
-          suggestions: section.suggestions.filter(suggestion => regex.test(suggestion.name))
-        };
-      })
-      .filter(section => section.suggestions.length>0);
-    }
+  renderSuggestion(suggestion) {
+    return (
+      <img style={{height: 50, width: 50}} src={suggestion.source} />
+    );
+  }
 
-    getSuggestionValue(suggestion) {
-      return suggestion.name;
-    }
+  onSuggestionSelected(event, {suggestion}) {
+    this.props.socket.emit('gif', suggestion.source)
+    gifs = []
+  }
 
-    renderSuggestion(suggestion) {
-      return (
-        <img style={{height: 50, width: 50}} src={suggestion.source} />
-      );
-    }
+  onSuggestionsFetchRequested({ value }){
+    this.setState({
+      suggestions: this.getSuggestions(value)
+    });
+  };
 
-    onSuggestionSelected(event, {suggestion}) {
-      this.props.socket.emit('gif', suggestion.source)
-      gifs = []
-    }
+  onSuggestionsClearRequested(){
+    this.setState({
+      suggestions: []
+    });
+  };
 
-    onSuggestionsFetchRequested({ value }){
-      this.setState({
-        suggestions: this.getSuggestions(value)
-      });
-    };
+  renderSectionTitle(section){
+    return (
+      <strong>{section.title}</strong>
+    );
+  }
 
-    onSuggestionsClearRequested(){
-      this.setState({
-        suggestions: []
-      });
-    };
-
-    renderSectionTitle(section){
-      return (
-        <strong>{section.title}</strong>
-      );
-    }
-
-    getSectionSuggestions(section) {
-      return section.suggestions;
-    }
+  getSectionSuggestions(section) {
+    return section.suggestions;
+  }
 
     componentDidMount() {
-        // this.state.socket.on('connect', () => {
-        //     this.state.socket.emit('username', username);
-        //     this.state.socket.emit('room');
-        // });
-        // this.state.socket.on('errorMessage', message => {
-        //     alert(message);
-        // });
+        this.state.socket.on('connect', () => {
+            this.state.socket.emit('username', this.state.username);
+            this.state.socket.emit('room');
+        });
+        this.state.socket.on('errorMessage', message => {
+            alert(message);
+        });
 
-        this.props.socket.on('typing', (username)=>{
+        this.state.socket.on('typing', (username)=>{
             let tempArr = this.state.typing.slice();
             let typingBool = false;
             for (var ind in tempArr){
@@ -101,7 +102,7 @@ class Chat extends React.Component {
             });
         });
 
-        this.props.socket.on('gifCall', (data) => {
+        this.state.socket.on('gifCall', (data) => {
           let gifs = []
           data.forEach(gif => {
             gifs.push({
@@ -113,7 +114,7 @@ class Chat extends React.Component {
           this.setState({message: data[0].search})
         })
 
-        this.props.socket.on('stopTyping', (username) => {
+        this.state.socket.on('stopTyping', (username) => {
             let tempArr = this.state.typing.slice();
             for(var ind in tempArr) {
               if (tempArr[ind] === username) {
@@ -125,12 +126,12 @@ class Chat extends React.Component {
             })
         })
 
-        this.props.socket.on('message', message => {
+        this.state.socket.on('message', message => {
             let tempMessageArr = this.state.messages.slice();
-            tempMessageArr.push({name: message.username, time: new Date(), body: message.content, image: message.image});
+            tempMessageArr.push({name: message.username, avatar: message.avatar, time: new Date(), image:message.image, body: message.content});
             this.setState({
                 messages: tempMessageArr,
-            })
+            }, ()=>{this.scrollToBottom()})
         })
     }
 
@@ -138,7 +139,7 @@ class Chat extends React.Component {
         const msg = e.target.value ? e.target.value : e.target.textContent ;
 
         if (msg.length > 0){
-            this.props.socket.emit('typing', this.props.username);
+          this.state.socket.emit('typing', this.state.username);
         }
 
       this.setState({
@@ -148,7 +149,7 @@ class Chat extends React.Component {
 
     emit(){
       let tempMessageArr = this.state.messages.slice();
-      tempMessageArr.push({name: this.props.username, body: this.state.message, time: new Date()});
+      tempMessageArr.push({name: this.state.username, body: this.state.message, time: new Date()});
       this.setState({
         messages: tempMessageArr,
       }, () => {
@@ -157,14 +158,12 @@ class Chat extends React.Component {
           return comp.indexOf(mess.name) === -1;
         })
         if (filtered.length % 5 === 0 && filtered.length > 0) {
-          this.props.socket.emit('messageArray', filtered);
+          this.state.socket.emit('messageArray', filtered);
         }
+          this.scrollToBottom();
       })
-      this.props.socket.emit('stopTyping', this.props.username);
-      this.props.socket.emit('message', this.state.message);
-      // if (this.state.messages.length % 5 === 0 && this.state.messages.length > 0) {
-      //   this.props.socket.emit('messageArray', this.state.messages);
-      // }
+      this.state.socket.emit('stopTyping', this.state.username);
+      this.state.socket.emit('message', this.state.message, this.state.user);
       this.setState({
         message: "",
       })
@@ -183,28 +182,76 @@ class Chat extends React.Component {
       }
     }
 
+    scrollToBottom() {
+      this.el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+
+    onSuggestionsFetchRequested({ value }){
+      this.setState({
+        suggestions: this.getSuggestions(value)
+      });
+    };
+
+    onSuggestionsClearRequested(){
+      this.setState({
+        suggestions: []
+      });
+    };
+
     render(){
       const { message,suggestions } = this.state;
       const inputProps= {
         value: this.state.message,
-        onChange:(e)=>this.handleMessageChange(e)
+        onChange:(e)=>this.handleMessageChange(e),
       }
       return (
         <div>
           <div className = "messageContainer">
             {this.state.messages.map((message, i)=>
-              <div>
-                <Comment.Group>
-                  <Comment>
-                    <Comment.Avatar src=""/>
-                    <Comment.Content>
-                      <Comment.Author>{message.name}</Comment.Author>
-                      <Comment.Text>{message.body}</Comment.Text>
-                      {message.image ? <img style={{width:100, height: 100}}src={message.image} /> : null}
-                    </Comment.Content>
-                  </Comment>
-                </Comment.Group>
-              </div>
+              {
+                if (this.props.username === message.name)
+                {return (<div className='message' ref={el => { this.el = el; }}>
+                  <Comment.Group>
+                    <Comment>
+                      <Comment.Avatar src={message.avatar}/>
+                      <Comment.Content>
+                        <Comment.Author>{message.name}</Comment.Author>
+                        <Comment.Text>{message.body}</Comment.Text>
+                        {message.image ? <img style={{width:100, height: 100}}src={message.image} /> : null}
+                      </Comment.Content>
+                    </Comment>
+                  </Comment.Group>
+                </div>)}
+                else if(message.name==='Moodbot'){
+                  return (<div className='message2' ref={el => { this.el = el; }}>
+                    <Comment.Group>
+                      <Comment>
+                        <Comment.Avatar src={message.avatar}/>
+                        <Comment.Content>
+                          <Comment.Author>{message.name}</Comment.Author>
+                          <Comment.Text>{message.body}</Comment.Text>
+                          {message.image ? <img style={{width:100, height: 100}}src={message.image} /> : null}
+                        </Comment.Content>
+                      </Comment>
+                    </Comment.Group>
+                  </div>);
+                }
+                else{
+                  return (<div className='message3' ref={el => { this.el = el; }}>
+                    <Comment.Group>
+                      <Comment>
+                        <Comment.Avatar src={message.avatar}/>
+                        <Comment.Content>
+                          <Comment.Author>{message.name}</Comment.Author>
+                          <Comment.Text>{message.body}</Comment.Text>
+                          {message.image ? <img style={{width:100, height: 100}}src={message.image} /> : null}
+                        </Comment.Content>
+                      </Comment>
+                    </Comment.Group>
+                  </div>);
+                }
+              }
             )}
           </div>
 

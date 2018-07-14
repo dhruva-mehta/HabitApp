@@ -6,12 +6,70 @@ body {
 }
 
 .messageContainer{
+  height: 100%;
+  overflow: scroll;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 100px;
   border-radius: 5px;
-  border: 1px solid gray;
+  border: 5px solid gray;
   padding: 5px;
   height: 500px;
+  width: 90%;
+  background: white;
+}
+
+.message3{
+  margin:2%;
+  clear: both;
+  border: 1px solid black;
+  height: 75px;
+  width: 300px;
+  border-radius: 10px;
+  background-color: #C6FFDD;
+}
+.message2{
+  margin-top: 2%;
+  margin-bottom: 2%;
+  margin-left: auto;
+  margin-right: auto;
+  clear: both;
+  border: 1px solid black;
+  height: 75px;
+  width: 500px;
+  border-radius: 10px;
+  background: linear-gradient(#1FA2FF,#12D8FA,#A6FFCB);
+}
+
+.message{
+  margin:2%;
+  float:right;
+  clear: both;
+  border: 1px solid black;
+  height: 75px;
+  width: 300px;
+  border-radius: 10px;
+  background-color: #FBD786;
 }
 
 .textBar{
+  margin-left: auto;
+  margin-right: auto;
   margin-top: 5px;
+}
+
+.test{
+  background: white
+}
+
+.wallpaper{
+  align-items: center;
+  opacity:0.8;
+  background: linear-gradient(#C6FFDD,#FBD786,#f7797d);
+  position:fixed;
+  width:100%;
+  height:100%;
+  top:0px;
+  left:0px;
+  z-index:1000;
 }

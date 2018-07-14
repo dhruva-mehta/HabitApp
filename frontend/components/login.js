@@ -1,27 +1,30 @@
 import React from 'react';
 import { Button, Form, Comment} from 'semantic-ui-react';
-import {Redirect} from 'react-router';
+import {Redirect, Switch} from 'react-router';
 
 class Login extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-          email: "",
-          pwd: "",
-          loggedin: false,
+            email: "",
+            pwd: "",
+            loggedin: false,
+            user: {}
         };
     }
 
-    login(){
-      fetch('/login',
-          {method:'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({
-                  username: this.state.email,
-                  password: this.state.pwd,
-              })
-          }).catch(err=>{console.log(err);})
-      this.setState({loggedin: true});
+    login() {
+        fetch('/login',
+            {method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    username: this.state.email,
+                    password: this.state.pwd,
+                })
+            })
+          .then(resp=>resp.json())
+          .then(userObj=>{this.setState({loggedin: true, user: userObj});})
+          .catch(err=>{console.log(err);});
     }
 
     render(){
@@ -38,8 +41,8 @@ class Login extends React.Component {
             </Form.Field>
             <Button type='submit' onClick={this.login.bind(this)}>Start Chatting</Button>
           </Form>
-
-          {this.state.loggedin ? <Redirect to={{pathname: '/chat', state:{username: this.state.email}}}/> : null}
+          {this.state.loggedin ? this.props.history.push('/profile', {user: this.state.user}) : null}
+          {/* <Switch><Redirect push to={{pathname: '/profile', state:{user: this.state.user}}}/></Switch> */}
         </div>
       )
     }

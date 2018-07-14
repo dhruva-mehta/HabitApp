@@ -11,22 +11,30 @@ mongoose.connect(connect);
 
 var userSchema = mongoose.Schema({
     name: {
-      type: String,
-      required: true
+        type: String,
+        required: true
     },
     password: {
-      type: String,
-      required: true
+        type: String,
+        required: true
     },
     email:{
-      type: String,
-      required: true
+        type: String,
+        required: true
     },
     imgUrl: {
-      type: String,
-      default: 'https://horizons-static.s3.amazonaws.com/horizons_h.png'
+        type: String,
+        default: 'https://horizons-static.s3.amazonaws.com/horizons_h.png'
     },
-  });
+    friends: {
+        type: Array,
+        default: []
+    },
+    requests:{
+        type: Array,
+        default: []
+    }
+});
 
 var User = mongoose.model('User', userSchema);
 

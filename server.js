@@ -8,15 +8,15 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var _ = require('underscore');
 
-var analysis = require('./analysis');
-var API_KEY = process.env.API_KEY;
-var axios = require('axios');
+var analysis = require('./analysis')
+var API_KEY=process.env.API_KEY;
+var axios=require('axios');
 
 /* EXPRESS ROUTES */
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', (request, response) => {
+app.use('/', (request, response) => {
     response.sendFile(__dirname + '/public/index.html'); // For React/Redux
 });
 
@@ -25,7 +25,7 @@ app.use('/api', routes);
 /* SOCKETS */
 io.on('connection', socket => {
     console.log('connected');
-    socket.on('username', username => {
+    socket.on('username', (username, userObj) => {
         if (!username || !username.trim()) {
             return socket.emit('errorMessage', 'No username!');
         }
@@ -34,9 +34,6 @@ io.on('connection', socket => {
     });
 
     socket.on('room', () => {
-        if (!socket.username) {
-            return socket.emit('errorMessage', 'Username not set!');
-        }
         socket.join('chat', () => {
             socket.to('chat').emit('message', {
                 username: 'System',
@@ -46,21 +43,15 @@ io.on('connection', socket => {
         return "";
     });
 
-    socket.on('message', message => {
+    socket.on('message', (message, user) => {
         socket.to('chat').emit('message', {
             username: socket.username,
+            avatar: user.imgUrl,
             content: message,
             image: null
         });
         return "";
     });
-
-    socket.on('gif', source => {
-      io.to('chat').emit('message', {
-        username: 'Giphy',
-        image: source
-      })
-    })
 
     socket.on('typing', (username) => {
         socket.to('chat').emit('typing', username);
@@ -69,6 +60,13 @@ io.on('connection', socket => {
     socket.on('stopTyping', (username) => {
         socket.to('chat').emit('stopTyping', username);
     });
+
+    socket.on('gif', source => {
+      io.to('chat').emit('message', {
+        username: 'Giphy',
+        image: source
+      })
+    })
 
     socket.on('messageArray', messages => {
         var giphyCall = (keyword) => {
@@ -97,8 +95,6 @@ io.on('connection', socket => {
         analysis.get_key_phrases(doc, giphyCall);
     })
 });
-
-
 
 /* CONNECTION */
 const PORT = process.env.PORT || 3001;
