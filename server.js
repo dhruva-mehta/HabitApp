@@ -11,7 +11,6 @@ var _ = require('underscore');
 var analysis = require('./analysis')
 var API_KEY=process.env.API_KEY;
 var axios=require('axios');
-
 /* EXPRESS ROUTES */
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -36,8 +35,9 @@ io.on('connection', socket => {
     socket.on('room', () => {
         socket.join('chat', () => {
             socket.to('chat').emit('message', {
-                username: 'System',
-                content: `${socket.username} has joined`
+                username: 'MoodBot',
+                content: `${socket.username} has joined`,
+                method: 'Bot'
             });
         });
         return "";
@@ -48,7 +48,8 @@ io.on('connection', socket => {
             username: socket.username,
             avatar: user.imgUrl,
             content: message,
-            image: null
+            image: null,
+            method: 'person'
         });
         return "";
     });
@@ -63,23 +64,33 @@ io.on('connection', socket => {
 
     socket.on('gif', source => {
       io.to('chat').emit('message', {
-        username: 'Giphy',
-        image: source
+        username: socket.username,
+        image: source,
+        method: 'Giphy'
       })
     })
 
+    socket.on('change', message => {
+      io.to('chat').emit('message', {
+        username: 'MoodBot',
+        content: 'We just changed your previous message to "' + message + '" to try and help your conversation partner understand you better!',
+        method: 'Bot'
+      })
+    } )
+
     socket.on('messageArray', messages => {
         var giphyCall = (keyword) => {
-          console.log('giphyCall')
-          const query = keyword.replace(' ', '+');
-          const queryUrl = `http://api.giphy.com/v1/gifs/search?q=${query}&api_key=${API_KEY}`;
-          axios.get(queryUrl).then(response => {
-            let data = []
-            for (let i = 0; i < 3; i++) {
-              data.push({id: response.data.data[i].id, search: keyword})
-            }
-            io.to('chat').emit('gifCall', data);
-          });
+          if (keyword) {
+            const query = keyword.replace(' ', '+');
+            const queryUrl = `http://api.giphy.com/v1/gifs/search?q=${query}&api_key=${API_KEY}`;
+            axios.get(queryUrl).then(response => {
+              let data = []
+              for (let i = 0; i < 5; i++) {
+                data.push({id: response.data.data[i].id, search: keyword})
+              }
+              io.to('chat').emit('gifCall', data);
+            });
+          }
         }
         var last5 = messages.slice(-5);
         var joined = _.map(last5, (msg)=>msg.body).join(' ');
@@ -87,8 +98,13 @@ io.on('connection', socket => {
         analysis.get_sentiments(doc, (score) => {
           if (score < 0.5) {
             io.to('chat').emit('message', {
-              username: `Moodbot`,
-              content: `Your recent messages have seemed negative. Why not send a gif?`
+              username: `MoodBot`,
+              content: `Your recent conversation seems to be heading south. Why not send a gif to liven things up? If that's not your style, you can always type joke to send a random joke!`
+            })
+          } else {
+            io.to('chat').emit('message', {
+              username: `MoodBot`,
+              content: `Your recent conversation seems to be going well! How about sending a gif or joke to keep the good times rolling? Here are some gifs, and if you want a random joke, just type joke and hit send!`
             })
           }
         })

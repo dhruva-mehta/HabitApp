@@ -9,23 +9,26 @@ class Login extends React.Component {
             email: "",
             pwd: "",
             loggedin: false,
-            user: {}
+            loginFunc: "",
         };
     }
 
-    login() {
-        fetch('/login',
-            {method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    username: this.state.email,
-                    password: this.state.pwd,
-                })
-            })
-          .then(resp=>resp.json())
-          .then(userObj=>{this.setState({loggedin: true, user: userObj});})
-          .catch(err=>{console.log(err);});
+    componentDidMount(){
+      const {login} = this.props;
+      this.setState({
+        loginFunc: login,
+      })
     }
+
+    submit(){
+      this.state.loginFunc(this.state.email, this.state.pwd);
+      this.setState({
+        email: "",
+        pwd:"",
+        loggedin: true,
+      })
+    }
+
 
     render(){
       return (
@@ -39,9 +42,9 @@ class Login extends React.Component {
               <label>Password</label>
               <input placeholder='Password' type="password" value={this.state.pwd} onChange={(e)=>{this.setState({pwd: e.target.value})}}/>
             </Form.Field>
-            <Button type='submit' onClick={this.login.bind(this)}>Start Chatting</Button>
+            <Button type='submit' onClick={this.submit.bind(this)}>Start Chatting</Button>
           </Form>
-          {this.state.loggedin ? this.props.history.push('/profile', {user: this.state.user}) : null}
+          {/* {this.state.loggedin ? this.props.history.push('/profile', {user: this.state.user}) : null} */}
           {/* <Switch><Redirect push to={{pathname: '/profile', state:{user: this.state.user}}}/></Switch> */}
         </div>
       )
